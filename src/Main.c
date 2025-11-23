@@ -3,9 +3,9 @@
 #include "/home/codeleaded/System/Static/Library/Random.h"
 
 
-#define BOID_SIZE 		0.0025f
-#define BOID_VISION 	0.05f
-#define BOID_FOV 		(F32_PI025 * 2.0f)
+#define BOID_SIZE 		0.004f
+#define BOID_VISION 	0.1f
+#define BOID_FOV 		(F32_PI * 1.5f)
 #define BOID_VELO		0.2f
 
 typedef struct Boid{
@@ -21,6 +21,11 @@ void Boid_Move(Boid* b,float t){
 	b->v = Vec2_Add(b->v,Vec2_Mulf(b->a,t));
 	b->v = Vec2_Mulf(Vec2_Norm(b->v),BOID_VELO);
 	b->p = Vec2_Add(b->p,Vec2_Mulf(b->v,t));
+
+	if(b->p.x < BOID_SIZE) 			b->p.x = BOID_SIZE;
+	if(b->p.y < BOID_SIZE) 			b->p.y = BOID_SIZE;
+	if(b->p.x > 1.0f - BOID_SIZE) 	b->p.x = 1.0f - BOID_SIZE;
+	if(b->p.x > 1.0f - BOID_SIZE) 	b->p.x = 1.0f - BOID_SIZE;
 }
 void Boid_Interact(Boid* b,Boid* b2,float t){
 	const Vec2 dir = Vec2_Sub(b->p,b2->p);
@@ -41,10 +46,10 @@ Vec2 Boid_Target(Boid* b,Vec2 p){
 	return Vec2_Mulf(dir,10.0f);
 }
 void Boid_Collision(Boid* b){
-	b->a = Vec2_Add(b->a,Boid_Obstacle(b,(Vec2){ 0.0f,b->p.y }));
-	b->a = Vec2_Add(b->a,Boid_Obstacle(b,(Vec2){ 1.0f,b->p.y }));
-	b->a = Vec2_Add(b->a,Boid_Obstacle(b,(Vec2){ b->p.x,0.0f }));
-	b->a = Vec2_Add(b->a,Boid_Obstacle(b,(Vec2){ b->p.x,1.0f }));
+	b->a = Vec2_Add(Vec2_Mulf(b->a,0.1f),Boid_Obstacle(b,(Vec2){ 0.0f,b->p.y }));
+	b->a = Vec2_Add(Vec2_Mulf(b->a,0.1f),Boid_Obstacle(b,(Vec2){ 1.0f,b->p.y }));
+	b->a = Vec2_Add(Vec2_Mulf(b->a,0.1f),Boid_Obstacle(b,(Vec2){ b->p.x,0.0f }));
+	b->a = Vec2_Add(Vec2_Mulf(b->a,0.1f),Boid_Obstacle(b,(Vec2){ b->p.x,1.0f }));
 }
 void Boid_Render(unsigned int* Target,int Width,int Height,Boid* b){
 	const Vec2 rot = Vec2_Mulf(Vec2_Norm(b->v),BOID_SIZE);
@@ -60,7 +65,7 @@ void Boid_Render(unsigned int* Target,int Width,int Height,Boid* b){
 	const Vec2 sp3 = Vec2_Mul(p3,(Vec2){ Width,Height });
 	Triangle_RenderX(Target,Width,Height,sp1,sp2,sp3,WHITE);
 
-	Circle_RenderXWire(Target,Width,Height,Vec2_Mul(b->p,(Vec2){ Width,Height }),BOID_VISION * (float)Width,WHITE,1.0f);
+	//Circle_RenderXWire(Target,Width,Height,Vec2_Mul(b->p,(Vec2){ Width,Height }),BOID_VISION * (float)Width,WHITE,1.0f);
 }
 
 
@@ -70,7 +75,7 @@ Vector boids;
 void Setup(AlxWindow* w){
 	boids = Vector_New(sizeof(Boid));
 	
-	for(int i = 0;i<200;i++){
+	for(int i = 0;i<500;i++){
 		Vector_Push(&boids,(Boid[]){{
 			.p = (Vec2){Random_f64_MinMax(0.0f,1.0f),Random_f64_MinMax(0.0f,1.0f)},
 			.v = (Vec2){0.0f,0.0f},
